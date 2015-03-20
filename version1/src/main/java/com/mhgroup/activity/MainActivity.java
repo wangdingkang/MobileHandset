@@ -1,4 +1,4 @@
-package com.mhgroup.translator;
+package com.mhgroup.activity;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -8,8 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.mhgroup.reader.MyReader;
-import com.mhgroup.reader.MyTranslator;
+import com.mhgroup.function.MyReader;
+import com.mhgroup.function.MyTranslator;
 import com.mhgroup.util.PromptUtils;
 
 import java.util.Locale;
