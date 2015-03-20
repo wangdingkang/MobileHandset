@@ -1,4 +1,4 @@
-package com.mhgroup.activity;
+package com.mhgroup.translator;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;

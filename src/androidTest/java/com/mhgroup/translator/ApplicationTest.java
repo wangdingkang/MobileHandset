@@ -1,4 +1,4 @@
-package com.mhgroup.activity;
+package com.mhgroup.translator;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
