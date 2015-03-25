@@ -1,0 +1,5 @@
+D:\android_projects\Translator\app\build\intermediates\classes\debug
+D:\android_projects\Translator\app\build\intermediates\pre-dexed\debug\support-annotations-21.0.3-476a4b4125467131bec357022f87bd7c626fb7f4.jar
+D:\android_projects\Translator\app\build\intermediates\pre-dexed\debug\internal_impl-21.0.3-6dba894050b71e84e40c1896dd1573212d39b227.jar
+D:\android_projects\Translator\app\build\intermediates\pre-dexed\debug\classes-79db61515e67802fd40b235022f466cd2773467d.jar
+D:\android_projects\Translator\app\build\intermediates\pre-dexed\debug\classes-bf74ada5228d1e87f749d44126ca52e1a49adec4.jar
