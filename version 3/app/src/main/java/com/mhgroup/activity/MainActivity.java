@@ -28,6 +28,7 @@ public class MainActivity extends ActionBarActivity {
 //    private CallMaker callMaker = null;
 
     private Button playButton = null;
+    private Button recordButton = null;
 
     private EditText translatedET = null, originalET = null;
     private String translatedText = null;
@@ -43,7 +44,11 @@ public class MainActivity extends ActionBarActivity {
                     String text = translatedET.getText().toString();
                     reader.read(text);
                 }
-
+                case R.id.recordButton:
+                {
+                    Intent intent = new Intent(MainActivity.this, RecordActivity.class);
+                    startActivity(intent);
+                }
                 default:
                 {
 
@@ -76,7 +81,12 @@ public class MainActivity extends ActionBarActivity {
 
         playButton = (Button)findViewById(R.id.playButton);
         playButton.setOnClickListener(buttonClickListener);
+
+        recordButton = (Button)findViewById(R.id.recordButton);
+        recordButton.setOnClickListener(buttonClickListener);
     }
+
+
 
 
     @Override
