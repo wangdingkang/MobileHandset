@@ -2,6 +2,7 @@ package com.mhgroup.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.speech.RecognizerIntent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.telephony.PhoneStateListener;
@@ -10,23 +11,28 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.mhgroup.function.CallMaker;
 import com.mhgroup.function.MyReader;
 import com.mhgroup.function.MyTranslator;
 import com.mhgroup.util.PromptUtils;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 
 public class MainActivity extends ActionBarActivity {
 
+    private static final int VOICE_RECOGNITION_REQUEST_CODE = 1001;
     private MyReader reader = null;
     private MyTranslator translator = null;
 //    private CallMaker callMaker = null;
-
+    private ListView mList;
     private Button playButton = null;
     private Button recordButton = null;
 
@@ -84,6 +90,33 @@ public class MainActivity extends ActionBarActivity {
 
         recordButton = (Button)findViewById(R.id.recordButton);
         recordButton.setOnClickListener(buttonClickListener);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK){
+// Fill the list view with the strings the recognizer thought it could have heard
+            ArrayList matches = data.getStringArrayListExtra(
+                        RecognizerIntent.EXTRA_RESULTS);
+            mList.setAdapter(new ArrayAdapter(this, android.R.layout.simple_list_item_1,
+                    matches));
+            }
+                //Result code for various error.
+            else if(resultCode == RecognizerIntent.RESULT_AUDIO_ERROR){
+                showToastMessage("Audio Error");
+            }else if(resultCode == RecognizerIntent.RESULT_CLIENT_ERROR){
+                showToastMessage("Client Error");
+            }else if(resultCode == RecognizerIntent.RESULT_NETWORK_ERROR){
+                showToastMessage("Network Error");
+            }else if(resultCode == RecognizerIntent.RESULT_NO_MATCH){
+                showToastMessage("No Match");
+            }else if(resultCode == RecognizerIntent.RESULT_SERVER_ERROR){
+                showToastMessage("Server Error");
+            }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    void showToastMessage(String message){
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
 

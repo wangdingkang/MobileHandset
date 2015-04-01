@@ -1,5 +1,6 @@
 package com.mhgroup.activity;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -12,7 +13,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 public class RecordActivity extends ActionBarActivity {
@@ -29,18 +32,8 @@ public class RecordActivity extends ActionBarActivity {
         Donespeaker = (Button) findViewById(R.id.doneButton);
         Cancelspeaker.setOnClickListener(buttonClickListener);
         Donespeaker.setOnClickListener(buttonClickListener);
-        checkVoiceRecognition();
-    }
-
-    public void checkVoiceRecognition() {
-        Package
-    }{
-        //check if the voice recoginition is available
-        PackageManager pm = getPackageManager();
-        List<ResolveInfo> activities = pm.queryIntentActivities(new Intent(
-                RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
-        if (activities.size() == 0) {
-            Toast.makeText(this, "Voice recognizer not present", Toast.LENGTH_SHORT).show();
+        if (checkVoiceRecognition()){
+            Startspeaker();
         }
     }
 
@@ -49,12 +42,12 @@ public class RecordActivity extends ActionBarActivity {
             switch (v.getId()){
                 case R.id.cancelButton:
                 {
-                    Intent intent = new Intent(RecordActivity.this, MainActivity.class);
-                    startActivity(intent);
+                    finish();
                 }
                 case R.id.doneButton:
                 {
-
+                    setResult(RESULT_OK);
+                    finish();
                 }
                 default:
                 {
@@ -64,12 +57,42 @@ public class RecordActivity extends ActionBarActivity {
         }
     };
 
-    private void startspeaker(){
+    public boolean checkVoiceRecognition(){
+        //check if the voice recoginition is available
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> activities = pm.queryIntentActivities(new Intent(
+                RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0);
+        if (activities.size() != 0) {
+            Toast.makeText(this, "Voice recognizer not present", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
+    private void Startspeaker(){
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+
+        // Specify the calling package to identify your application
+//        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getClass()
+//                .getPackage().getName());
+
+        // Given an hint to the recognizer about what the user is going to say
+        //There are two form of language model available
+        //1.LANGUAGE_MODEL_WEB_SEARCH : For short phrases
+        //2.LANGUAGE_MODEL_FREE_FORM  : If not sure about the words or phrases and its domain.
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speech recognition demo");
-        startActivityForResult(intent, VOICE_RECOGNITION_REQUEST_CODE);
+                RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
+
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,"please speak");
+        try {
+            startActivityForResult(intent, VOICE_RECOGNITION_REQUEST_CODE);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(this,"speech not support",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
