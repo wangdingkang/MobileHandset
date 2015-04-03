@@ -1,5 +1,7 @@
 package com.mhgroup.util;
 
+import android.util.Log;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -23,14 +25,15 @@ public class HttpUtils {
     {
         String res = "";
         HttpClient httpClient = new DefaultHttpClient();
-        HttpGet httpGet = new HttpGet(url);
+        //Log.d("wdk", url);
+        HttpGet httpGet = new HttpGet(url.replace(" ", "%20"));
         try {
             HttpResponse httpResponse = httpClient.execute(httpGet);
             if(httpResponse.getStatusLine().getStatusCode() == 200)
             {
                 String json = EntityUtils.toString(httpResponse.getEntity());
                 JSONObject jo = new JSONObject(json);
-                res = jo.getString(JSON_RES);
+                res = new String(jo.getString(JSON_RES).getBytes(), "UTF-8");
             }
         } catch (IOException e) {
             e.printStackTrace();

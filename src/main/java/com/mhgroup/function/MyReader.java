@@ -1,10 +1,14 @@
-package com.mhgroup.reader;
+package com.mhgroup.function;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.*;
-import android.widget.Toast;
 
+import com.mhgroup.activity.R;
+import com.mhgroup.application.MyApplication;
+import com.mhgroup.util.FileUtils;
 import com.mhgroup.util.PromptUtils;
 
 import java.util.Locale;
@@ -16,20 +20,27 @@ public class MyReader implements OnInitListener{
 
     private TextToSpeech mtts;
     private Context context;
-    private Locale lang;
 
-    public MyReader(Context context, Locale locale)
+    public MyReader(Context context)
     {
-        this.lang = locale;
         this.context = context;
         this.mtts = new TextToSpeech(context, this);
+    }
+
+    public void destroy()
+    {
+        if(mtts!=null)
+        {
+            mtts.stop();
+            mtts.shutdown();
+        }
     }
 
     @Override
     public void onInit(int status) {
         if(status == TextToSpeech.SUCCESS)
         {
-            mtts.setLanguage(lang);
+            //
         }
         else
         {
@@ -46,6 +57,7 @@ public class MyReader implements OnInitListener{
             {
                 if(!mtts.isSpeaking())
                 {
+                    mtts.setLanguage(MyApplication.LANG_LOCALE_MAP.get(FileUtils.getGoalLanguage(context)));
                     mtts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
                 }
                 else
@@ -68,12 +80,5 @@ public class MyReader implements OnInitListener{
     {
         mtts.stop();
     }
-
-    public void changeLocale(Locale locale)
-    {
-        this.lang = locale;
-        mtts.setLanguage(lang);
-    }
-
 
 }
