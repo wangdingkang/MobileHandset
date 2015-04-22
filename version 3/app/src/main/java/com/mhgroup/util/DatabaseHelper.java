@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 import android.widget.TableLayout;
 
 import com.mhgroup.bean.Record;
@@ -56,12 +55,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public void addRecord(Record record) {
         int count = countRecords(record.getWholePhrase(), record.getChangedPhrase());
-        if(count != 0)
+        if(count == 0)
         {
-            String updateString = "UPDATE " + TABLE_NAME + " SET " + COLUMNS[5] + " = " + COLUMNS[5] + "+1 WHERE " +
-                    COLUMNS[2] + " = ? AND " + COLUMNS[3] + " = ?";
+            String updateString = "UPDATE " + TABLE_NAME + " SET " + COLUMNS[4] + " = " + COLUMNS[4] + " +1 WHERE " +
+                    COLUMNS[3] + " = " + record.getWholePhrase() + " AND " + COLUMNS[4] + " = " + record.getChangedPhrase();
             SQLiteDatabase db = this.getWritableDatabase();
-            db.execSQL(updateString, new String[]{record.getWholePhrase(), record.getChangedPhrase()});
+            db.execSQL(updateString);
             db.close();
         }
         else

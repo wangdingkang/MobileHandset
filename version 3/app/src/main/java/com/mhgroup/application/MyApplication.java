@@ -30,8 +30,6 @@ public class MyApplication extends Application {
     public static String DEFAULT_ORI;
     public static String DEFAULT_GOAL;
 
-    private static Context CONTEXT;
-
     public static Map<String, Locale> LANG_LOCALE_MAP = new HashMap<String, Locale>();
 
     @Override
@@ -52,9 +50,9 @@ public class MyApplication extends Application {
 
         DEFAULT_ORI = getResources().getString(R.string.setting_origin_default);
         DEFAULT_GOAL = getResources().getString(R.string.setting_goal_default);
-        CONTEXT = getApplicationContext();
+
         // read the settings
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(CONTEXT);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         if (sharedPreferences.contains(PRE_ORI) && sharedPreferences.contains(PRE_GOAL)) {
             //ORI_LANG = sharedPreferences.getString(PRE_ORI, DEFAULT_ORI);
             //GOAL_LANG = sharedPreferences.getString(PRE_GOAL, DEFAULT_GOAL);
@@ -70,12 +68,6 @@ public class MyApplication extends Application {
             //ORI_LANG = DEFAULT_ORI;
             //GOAL_LANG = DEFAULT_GOAL;
         }
-    }
-
-    public String getGoalLanguage()
-    {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(CONTEXT);
-        return sharedPreferences.getString(PRE_GOAL, "zh-CN");
     }
 
 

@@ -83,12 +83,4 @@ public class Record {
     public void setFrequency(int frequency) {
         this.frequency = frequency;
     }
-
-    public String toString()
-    {
-        return "FirstWord: " + this.firstWord + "\n" +
-                "WholePhrase: " + this.wholePhrase + "\n" +
-                "ChangedPhrase: " + this.changedPhrase + "\n";
-    }
-
 }

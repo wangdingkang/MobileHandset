@@ -8,7 +8,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="record"
+        android:text="Record"
         android:id="@+id/recordButton"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
@@ -16,20 +16,29 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="play"
+        android:text="Play"
         android:id="@+id/playButton"
         android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/recordButton"
-        android:layout_toStartOf="@+id/recordButton" />
+        android:layout_toStartOf="@+id/recordButton"
+        android:layout_toLeftOf="@+id/recordButton" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="setting"
+        android:text="Setting"
         android:id="@+id/settingButton"
         android:layout_alignParentBottom="true"
         android:layout_toRightOf="@+id/recordButton"
         android:layout_toEndOf="@+id/recordButton" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Revise"
+        android:id="@+id/reviseButton"
+        android:layout_above="@+id/settingButton"
+        android:layout_alignRight="@+id/translatedEditText"
+        android:layout_alignEnd="@+id/translatedEditText" />
 
     <EditText
         android:layout_width="wrap_content"

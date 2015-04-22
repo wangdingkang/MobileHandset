@@ -1,7 +1,10 @@
 package com.mhgroup.activity;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Message;
 import android.speech.RecognizerIntent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -17,9 +20,11 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.mhgroup.application.MyApplication;
 import com.mhgroup.function.CallMaker;
 import com.mhgroup.function.MyReader;
 import com.mhgroup.function.MyTranslator;
+import com.mhgroup.util.FileUtils;
 import com.mhgroup.util.PromptUtils;
 
 import java.util.ArrayList;
@@ -32,31 +37,34 @@ public class MainActivity extends ActionBarActivity {
     private MyReader reader = null;
     private MyTranslator translator = null;
 //    private CallMaker callMaker = null;
-    private ListView mList;
+
     private Button playButton = null;
     private Button recordButton = null;
+    private Button settingButton = null;
 
     private EditText translatedET = null, originalET = null;
     private String translatedText = null;
+    private Handler myHandler = null;
 
-    private Button.OnClickListener buttonClickListener = new Button.OnClickListener()
-    {
+    private Button.OnClickListener buttonClickListener = new Button.OnClickListener() {
         @Override
         public void onClick(View v) {
-            switch(v.getId())
-            {
-                case R.id.playButton:
-                {
+            switch (v.getId()) {
+                case R.id.playButton: {
                     String text = translatedET.getText().toString();
                     reader.read(text);
+                    break;
                 }
-                case R.id.recordButton:
-                {
-                    Intent intent = new Intent(MainActivity.this, RecordActivity.class);
+                case R.id.recordButton: {
+                    startSpeaker();
+                    break;
+                }
+                case R.id.settingButton: {
+                    Intent intent = new Intent(MainActivity.this, SettingActivity.class);
                     startActivity(intent);
+                    break;
                 }
-                default:
-                {
+                default: {
 
                 }
             }
@@ -71,8 +79,16 @@ public class MainActivity extends ActionBarActivity {
         PromptUtils.currentContext = MainActivity.this;
 
         // We need to change the locale later.
-        reader = new MyReader(MainActivity.this, Locale.getDefault());
-        translator = new MyTranslator(Locale.getDefault(), Locale.getDefault());
+        reader = new MyReader(MainActivity.this);
+        translator = new MyTranslator(MainActivity.this);
+        myHandler = new Handler(){
+
+            @Override
+            public void handleMessage(Message msg) {
+                translatedET.setText(translatedText);
+            }
+
+        };
 
 //        Intent i = getBaseContext().getPackageManager()
 //                .getLaunchIntentForPackage(
@@ -82,45 +98,71 @@ public class MainActivity extends ActionBarActivity {
 
         translatedText = new String();
 
-        originalET = (EditText)findViewById(R.id.originalEditText);
-        translatedET = (EditText)findViewById(R.id.translatedEditText);
+        originalET = (EditText) findViewById(R.id.originalEditText);
+        translatedET = (EditText) findViewById(R.id.translatedEditText);
 
-        playButton = (Button)findViewById(R.id.playButton);
+        playButton = (Button) findViewById(R.id.playButton);
         playButton.setOnClickListener(buttonClickListener);
 
-        recordButton = (Button)findViewById(R.id.recordButton);
+        settingButton = (Button) findViewById(R.id.settingButton);
+        settingButton.setOnClickListener(buttonClickListener);
+
+        recordButton = (Button) findViewById(R.id.recordButton);
         recordButton.setOnClickListener(buttonClickListener);
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK){
+        if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK) {
 // Fill the list view with the strings the recognizer thought it could have heard
             ArrayList matches = data.getStringArrayListExtra(
-                        RecognizerIntent.EXTRA_RESULTS);
-            mList.setAdapter(new ArrayAdapter(this, android.R.layout.simple_list_item_1,
-                    matches));
-            }
-                //Result code for various error.
-            else if(resultCode == RecognizerIntent.RESULT_AUDIO_ERROR){
-                showToastMessage("Audio Error");
-            }else if(resultCode == RecognizerIntent.RESULT_CLIENT_ERROR){
-                showToastMessage("Client Error");
-            }else if(resultCode == RecognizerIntent.RESULT_NETWORK_ERROR){
-                showToastMessage("Network Error");
-            }else if(resultCode == RecognizerIntent.RESULT_NO_MATCH){
-                showToastMessage("No Match");
-            }else if(resultCode == RecognizerIntent.RESULT_SERVER_ERROR){
-                showToastMessage("Server Error");
-            }
+                    RecognizerIntent.EXTRA_RESULTS);
+            String firstMatch = matches.get(0).toString();
+            originalET.setText(firstMatch);
+            startTranslate();
+        }
+        //Result code for various error.
+        else if (resultCode == RecognizerIntent.RESULT_AUDIO_ERROR) {
+            showToastMessage("Audio Error");
+        } else if (resultCode == RecognizerIntent.RESULT_CLIENT_ERROR) {
+            showToastMessage("Client Error");
+        } else if (resultCode == RecognizerIntent.RESULT_NETWORK_ERROR) {
+            showToastMessage("Network Error");
+        } else if (resultCode == RecognizerIntent.RESULT_NO_MATCH) {
+            showToastMessage("No Match");
+        } else if (resultCode == RecognizerIntent.RESULT_SERVER_ERROR) {
+            showToastMessage("Server Error");
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    void showToastMessage(String message){
+    void showToastMessage(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
+    private void startSpeaker() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+
+        // Specify the calling package to identify your application
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getClass()
+                .getPackage().getName());
 
 
+        // Given an hint to the recognizer about what the user is going to say
+        //There are two form of language model available
+        //1.LANGUAGE_MODEL_WEB_SEARCH : For short phrases
+        //2.LANGUAGE_MODEL_FREE_FORM  : If not sure about the words or phrases and its domain.
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        Locale locale = MyApplication.LANG_LOCALE_MAP.get(FileUtils.getOriginalLanguage(MainActivity.this));
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.getLanguage());
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "please speak");
+        try {
+            startActivityForResult(intent, VOICE_RECOGNITION_REQUEST_CODE);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(this, "speech not support",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -144,20 +186,29 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void startTranslate()
-    {
-        String originalText = originalET.getText().toString();
-        if(!originalText.equals(""))
-        {
-            translatedText = translator.translate(originalText);
-            translatedET.setText(translatedText);
-        }
-        else
-        {
-            PromptUtils.showMessage("No input.");
-        }
+    public void startTranslate() {
+        new Thread(translateRunnable).start();
     }
 
+    public Runnable translateRunnable = new Runnable()
+    {
+
+        @Override
+        public void run() {
+            String originalText = originalET.getText().toString();
+            if (!originalText.equals("")) {
+                translatedText = translator.translate(originalText);
+                myHandler.sendEmptyMessage(0);
+            } else {
+                PromptUtils.showMessage("No input.");
+            }
+        }
+    };
 
 
+    @Override
+    protected void onDestroy() {
+        reader.destroy();
+        super.onDestroy();
+    }
 }

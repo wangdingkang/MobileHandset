@@ -21,13 +21,20 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.mhgroup.application.MyApplication;
+import com.mhgroup.bean.Record;
+import com.mhgroup.bean.IndexMatchpair;
+import com.mhgroup.bean.StringMatchpair;
 import com.mhgroup.function.CallMaker;
 import com.mhgroup.function.MyReader;
 import com.mhgroup.function.MyTranslator;
+import com.mhgroup.util.DatabaseHelper;
 import com.mhgroup.util.FileUtils;
 import com.mhgroup.util.PromptUtils;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -41,10 +48,14 @@ public class MainActivity extends ActionBarActivity {
     private Button playButton = null;
     private Button recordButton = null;
     private Button settingButton = null;
+    private Button reviseButton = null;
 
     private EditText translatedET = null, originalET = null;
     private String translatedText = null;
     private Handler myHandler = null;
+
+    private DatabaseHelper DH = new DatabaseHelper(MainActivity.this);
+    private boolean flag = true;
 
     private Button.OnClickListener buttonClickListener = new Button.OnClickListener() {
         @Override
@@ -64,12 +75,144 @@ public class MainActivity extends ActionBarActivity {
                     startActivity(intent);
                     break;
                 }
+                case R.id.reviseButton: {
+                    if (flag) {
+                        translatedET.setEnabled(true);
+                        reviseButton.setText("Submit");
+                        flag = false;
+                    }
+                    else{
+                        String goalLanguage = new MyApplication().getGoalLanguage();
+                        String revisedText = translatedET.getText().toString();
+                        ArrayList<IndexMatchpair> Match;
+                        ArrayList<StringMatchpair> StringMatch;
+                        String firstWord;
+                        if (goalLanguage.equals("zh-CN")){
+                            String[] translatedArray = new String[translatedText.length()];
+                            for (int i = 0; i<translatedText.length();i++){
+                                translatedArray[i] = translatedText.charAt(i)+"";
+                            }
+                            String[] revisedArray = new String[revisedText.length()];
+                            for (int i = 0; i<revisedText.length();i++){
+                                revisedArray[i] = revisedText.charAt(i)+"";
+                            }
+                            Match = Eqindex(translatedArray,revisedArray);
+                            StringMatch = EqString(Match,translatedArray,revisedArray,true);
+                            for (int i = 0;i<StringMatch.size();i++) {
+                                firstWord = StringMatch.get(i).Ophrase.charAt(0)+"";
+                                Record record = new Record(firstWord, StringMatch.get(i).Ophrase, StringMatch.get(i).Rphrase);
+                                Log.d("INSERT", record.toString());
+                                DH.addRecord(record);
+                            }
+                        }
+                        else{
+                            String[] translatedArray = translatedText.split(" ");
+                            String[] revisedArray = revisedText.split(" ");
+                            Log.d("revisedText",revisedText);
+                            Match = Eqindex(translatedArray,revisedArray);
+                            StringMatch = EqString(Match,translatedArray,revisedArray,false);
+                            for (int i = 0;i<StringMatch.size();i++) {
+                                firstWord = StringMatch.get(i).Ophrase.split(" ")[0];
+                                Record record = new Record(firstWord, StringMatch.get(i).Ophrase, StringMatch.get(i).Rphrase);
+                                Log.d("INSERT", record.toString());
+                                DH.addRecord(record);
+                            }
+                        }
+                        flag = true;
+                        reviseButton.setText("Revise");
+                        translatedET.setEnabled(false);
+
+                    }
+                }
                 default: {
 
                 }
             }
         }
     };
+
+    public ArrayList<IndexMatchpair> Eqindex(String[] UnrevisedString, String[] RevisedString){
+        int n = UnrevisedString.length;
+        int m = RevisedString.length;
+        ArrayList<IndexMatchpair> match = new ArrayList();
+        match.add(new IndexMatchpair(0,0));
+        int[][] a = new int[n+1][m+1];
+        for (int i=0;i<n;i++){
+            a[i+1][0]=i+1;
+        }
+        a[0][0] = 0;
+        for (int j=0;j<m;j++){
+            a[0][j+1]=j+1;
+        }
+        for (int i=0;i<n;i++){
+            for (int j=0;j<m;j++){
+                if (UnrevisedString[i].equals(RevisedString[j])){
+                    a[i+1][j+1] = a[i][j];
+                    IndexMatchpair mp = new IndexMatchpair(i,j);
+                    match.add(mp);
+                }
+
+            }
+        }
+        return match;
+    }
+
+    public ArrayList<StringMatchpair> EqString(ArrayList<IndexMatchpair> match,  String[] UnrevisedString, String[] RevisedString, boolean isChinese){
+        int n = match.size();
+        ArrayList<StringMatchpair> stringMatch = new ArrayList<StringMatchpair>();
+        String s1;
+        String s2;
+        for (int i=0; i<n;i++){
+
+            int i1 = match.get(i).index1;
+
+            int i2 = match.get(i).index2;
+
+            if (i<n-1){
+                int j1 = match.get(i+1).index1;
+                int j2 = match.get(i+1).index2;
+                if (j1-i1 > 1 || j2-i2>1){
+                    if (isChinese){
+                        s1 = join(UnrevisedString, i1, j1,"");
+                        s2 = join(RevisedString, i2, j2,"");
+                    }
+                    else{
+                        s1 = join(UnrevisedString, i1, j1," ");
+                        s2 = join(RevisedString, i2, j2," ");
+                    }
+                    stringMatch.add(new StringMatchpair(s1,s2));
+                }
+            }
+            else{
+                if (i1 != UnrevisedString.length-1 || i2 != RevisedString.length-1){
+                    if (isChinese){
+                        s1 = join(UnrevisedString, i1, UnrevisedString.length,"");
+                        s2 = join(RevisedString, i2, RevisedString.length,"");
+                    }
+                    else {
+                        s1 = join(UnrevisedString, i1, UnrevisedString.length, " ");
+                        s2 = join(RevisedString, i2, RevisedString.length, " ");
+                    }
+                    stringMatch.add(new StringMatchpair(s1,s2));
+                }
+            }
+        }
+        return stringMatch;
+    }
+
+    private String join(String[] l, int begin, int end, String sign){
+        String res = "";
+        for (int i = begin; i<end; i++){
+            if (i!=end-1){
+                res += l[i] + sign;
+            }
+            else{
+                res += l[i];
+            }
+        }
+        return res;
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +243,7 @@ public class MainActivity extends ActionBarActivity {
 
         originalET = (EditText) findViewById(R.id.originalEditText);
         translatedET = (EditText) findViewById(R.id.translatedEditText);
+        translatedET.setEnabled(false);
 
         playButton = (Button) findViewById(R.id.playButton);
         playButton.setOnClickListener(buttonClickListener);
@@ -109,6 +253,9 @@ public class MainActivity extends ActionBarActivity {
 
         recordButton = (Button) findViewById(R.id.recordButton);
         recordButton.setOnClickListener(buttonClickListener);
+
+        reviseButton = (Button) findViewById(R.id.reviseButton);
+        reviseButton.setOnClickListener(buttonClickListener);
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -196,12 +343,86 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void run() {
             String originalText = originalET.getText().toString();
+            String firstWord;
+            ArrayList<String> translatedTextArray = new ArrayList<String>();
             if (!originalText.equals("")) {
                 translatedText = translator.translate(originalText);
-                myHandler.sendEmptyMessage(0);
-            } else {
+            }
+            else {
                 PromptUtils.showMessage("No input.");
             }
+            String goalLanguage = new MyApplication().getGoalLanguage();
+            if (goalLanguage.equals("zh-CN")) {
+                int pointer = 0;
+                boolean tempflag = true;
+                while (pointer < translatedText.length()){
+                        firstWord = translatedText.charAt(pointer)+"";
+                        Log.d("aa", firstWord);
+                        List<Record> ListRecords = DH.queryRecords(firstWord);
+                        for(Record record : ListRecords)
+                        {
+                        Log.d("QUERY", record.toString());
+                    }
+                    while (!ListRecords.isEmpty()){
+
+                        Record temprecord = ListRecords.remove(0);
+                        if (translatedText.length()-pointer >= temprecord.getLength()){
+                            String wholephrase = temprecord.getWholePhrase();
+                            if (translatedText.substring(pointer, pointer+wholephrase.length()).equals(wholephrase)){
+                                translatedTextArray.add(temprecord.getChangedPhrase());
+                                pointer += wholephrase.length();
+                                tempflag = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (tempflag){
+                        translatedTextArray.add(firstWord);
+                        pointer ++;
+                    }
+                    flag = true;
+                }
+                String[] translatedstringarray = translatedTextArray.toArray(new String[translatedTextArray.size()]);
+                translatedText = join(translatedstringarray,0,translatedstringarray.length,"");
+            }
+            else{
+                int pointer = 0;
+                boolean tempflag = true;
+                String[] UnrevisedText = translatedText.split(" ");
+                while (pointer < UnrevisedText.length){
+                    firstWord = UnrevisedText[pointer];
+                    List<Record> ListRecords = DH.queryRecords(firstWord);
+
+/*                  for(Record record : ListRecords)
+                    {
+                        Log.d("QUERY", record.toString());
+                    }
+*/
+                    while (!ListRecords.isEmpty()){
+                        Record tempRecord = ListRecords.remove(0);
+//                        Log.d("left", UnrevisedText.length-pointer-1+"");
+//                        Log.d("right",tempRecord.getLength()+"");
+                        if (UnrevisedText.length-pointer >= tempRecord.getLength()){
+                                String[] wholephrase = tempRecord.getWholePhrase().split(" ");
+                                if (Arrays.equals(Arrays.copyOfRange(UnrevisedText, pointer, pointer + wholephrase.length), wholephrase)){
+                                    translatedTextArray.add(tempRecord.getChangedPhrase());
+                                    pointer += wholephrase.length;
+                                    tempflag = false;
+                                    break;
+                                }
+                        }
+                    }
+                    if (tempflag){
+                        translatedTextArray.add(firstWord);
+                        pointer ++;
+                    }
+                    flag = true;
+                }
+                String[] translatedstringarray = translatedTextArray.toArray(new String[translatedTextArray.size()]);
+                Log.d("translatedStringArray", Arrays.toString(translatedstringarray));
+                translatedText = join(translatedstringarray,0,translatedstringarray.length," ");
+            }
+            myHandler.sendEmptyMessage(0);
         }
     };
 
